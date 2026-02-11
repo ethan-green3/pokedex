@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"sort"
+
+	"github.com/ethan-green3/pokedexcli/pokeapi"
 )
 
 var commands map[string]cliCommand
@@ -11,16 +13,21 @@ var commands map[string]cliCommand
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(c *config) error
 }
 
-func commandExit() error {
+type config struct {
+	Next     string
+	Previous string
+}
+
+func commandExit(c *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
+func commandHelp(c *config) error {
 	names := make([]string, 0, len(commands))
 	for name := range commands {
 		names = append(names, name)
@@ -37,6 +44,41 @@ func commandHelp() error {
 	return nil
 }
 
+func commandMap(c *config) error {
+	res, err := pokeapi.GetLocationAreas(c.Next)
+	if err != nil {
+		return err
+	}
+	c.Next = *res.Next
+	if isPreviousNil(res.Previous) {
+		c.Previous = "https://pokeapi.co/api/v2/location-area/"
+		return nil
+	}
+	c.Previous = *res.Previous
+	return nil
+}
+
+func commandMapb(c *config) error {
+	res, err := pokeapi.GetLocationAreas(c.Previous)
+	if err != nil {
+		return err
+	}
+	c.Next = *res.Next
+	if isPreviousNil(res.Previous) {
+		c.Previous = "https://pokeapi.co/api/v2/location-area/"
+		return nil
+	}
+	c.Previous = *res.Previous
+	return nil
+}
+
+func isPreviousNil(prev *string) bool {
+	if prev == nil {
+		return true
+	}
+	return false
+}
+
 func init() {
 	commands = map[string]cliCommand{
 		"exit": {
@@ -48,6 +90,16 @@ func init() {
 			name:        "help",
 			description: "Displays a help message",
 			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Display the names of 20 location areas in the Pokemon world",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Display the names of the previous 20 location areas in the Pokemon world",
+			callback:    commandMapb,
 		},
 	}
 }
