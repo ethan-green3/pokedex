@@ -49,11 +49,14 @@ func commandMap(c *config) error {
 	if err != nil {
 		return err
 	}
+	printResponse(res)
+
 	c.Next = *res.Next
 	if isPreviousNil(res.Previous) {
 		c.Previous = "https://pokeapi.co/api/v2/location-area/"
 		return nil
 	}
+
 	c.Previous = *res.Previous
 	return nil
 }
@@ -63,6 +66,7 @@ func commandMapb(c *config) error {
 	if err != nil {
 		return err
 	}
+	printResponse(res)
 	c.Next = *res.Next
 	if isPreviousNil(res.Previous) {
 		c.Previous = "https://pokeapi.co/api/v2/location-area/"
@@ -77,6 +81,12 @@ func isPreviousNil(prev *string) bool {
 		return true
 	}
 	return false
+}
+
+func printResponse(res pokeapi.Response) {
+	for _, area := range res.Results {
+		fmt.Println(area.Name)
+	}
 }
 
 func init() {

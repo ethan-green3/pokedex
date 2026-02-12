@@ -34,8 +34,5 @@ func GetLocationAreas(url string) (Response, error) {
 	if err != nil {
 		return r, fmt.Errorf("Error unmarshaling JSON into response struct: %w", err)
 	}
-	for _, item := range r.Results {
-		fmt.Printf("%s\n", item.Name)
-	}
 	return r, nil
 }
