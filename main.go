@@ -18,7 +18,11 @@ func main() {
 			continue
 		}
 		if value, ok := commands[command[0]]; ok {
-			err := value.callback(&config)
+			args := ""
+			if len(command) > 1 {
+				args = command[1]
+			}
+			err := value.callback(&config, args)
 			if err != nil {
 				fmt.Println(err)
 			}

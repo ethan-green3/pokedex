@@ -13,7 +13,7 @@ var commands map[string]cliCommand
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config) error
+	callback    func(c *config, args string) error
 }
 
 type config struct {
@@ -43,16 +43,21 @@ func init() {
 			description: "Display the names of the previous 20 location areas in the Pokemon world",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Explore a location to learn more about the Pokemon that are there\n\tExample usage: explore mt-coronet-2f",
+			callback:    commandExplore,
+		},
 	}
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, args string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, args string) error {
 	names := make([]string, 0, len(commands))
 	for name := range commands {
 		names = append(names, name)
@@ -69,7 +74,7 @@ func commandHelp(c *config) error {
 	return nil
 }
 
-func commandMap(c *config) error {
+func commandMap(c *config, args string) error {
 	res, err := pokeapi.GetLocationAreas(c.Next)
 	if err != nil {
 		return err
@@ -87,7 +92,7 @@ func commandMap(c *config) error {
 	return nil
 }
 
-func commandMapb(c *config) error {
+func commandMapb(c *config, args string) error {
 	res, err := pokeapi.GetLocationAreas(c.Previous)
 	if err != nil {
 		return err
@@ -101,6 +106,20 @@ func commandMapb(c *config) error {
 		return nil
 	}
 	c.Previous = *res.Previous
+	return nil
+}
+
+func commandExplore(c *config, location string) error {
+	url := "https://pokeapi.co/api/v2/location-area/" + location
+	exploreResponse, err := pokeapi.ExploreLocation(url)
+	fmt.Println("Exploring:", location)
+	if err != nil {
+		return fmt.Errorf("Error within exploring a location: %w", err)
+	}
+	fmt.Println("Found Pokemon:")
+	for _, p := range exploreResponse.Encounters {
+		fmt.Printf("- %s\n", p.Pokemon.Name)
+	}
 	return nil
 }
 

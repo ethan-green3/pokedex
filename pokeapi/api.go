@@ -10,7 +10,7 @@ import (
 	"github.com/ethan-green3/pokedexcli/internal/pokecache"
 )
 
-type Response struct {
+type LocationResponse struct {
 	Results  []Location `json:"results"`
 	Next     *string    `json:"next"`
 	Previous *string    `json:"previous"`
@@ -21,11 +21,24 @@ type Location struct {
 	URL  string `json:"url"`
 }
 
-var cache = pokecache.NewCache(time.Second * 5)
+type ExploreResponse struct {
+	Encounters []PokemonEncounters `json:"pokemon_encounters"`
+}
 
-func GetLocationAreas(url string) (Response, error) {
+type PokemonEncounters struct {
+	Pokemon Pokemon `json:"pokemon"`
+}
+
+type Pokemon struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+var cache = pokecache.NewCache(time.Second * 30)
+
+func GetLocationAreas(url string) (LocationResponse, error) {
 	if val, found := cache.Get(url); found {
-		var r Response
+		var r LocationResponse
 		err := json.Unmarshal(val, &r)
 		if err != nil {
 			return r, fmt.Errorf("Error unmarshaling JSON from cache")
@@ -34,7 +47,7 @@ func GetLocationAreas(url string) (Response, error) {
 	}
 
 	client := &http.Client{}
-	var r Response
+	var r LocationResponse
 	res, err := client.Get(url)
 	if err != nil {
 		return r, fmt.Errorf("Error fetching location areas: %w", err)
@@ -60,4 +73,35 @@ func GetLocationAreas(url string) (Response, error) {
 		return r, fmt.Errorf("Error unmarshaling JSON into response struct: %w", err)
 	}
 	return r, nil
+}
+
+func ExploreLocation(url string) (ExploreResponse, error) {
+	if val, found := cache.Get(url); found {
+		fmt.Println("Found location in cache")
+		var expRes ExploreResponse
+		err := json.Unmarshal(val, &expRes)
+		if err != nil {
+			return expRes, fmt.Errorf("Error unmarshaling explore response data from cache: %w", err)
+		}
+		return expRes, nil
+	}
+
+	client := &http.Client{}
+	var expRes ExploreResponse
+	res, err := client.Get(url)
+	if err != nil {
+		return expRes, fmt.Errorf("Error exploring area: %w", err)
+	}
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		return expRes, fmt.Errorf("Error reading data from exlore response body: %w", err)
+	}
+
+	cache.Add(url, data)
+	if err = json.Unmarshal(data, &expRes); err != nil {
+		return expRes, fmt.Errorf("Error unmarshaling JSON into Explore resposne struct: %w", err)
+	}
+	return expRes, nil
 }
