@@ -55,7 +55,6 @@ func (c *Cache) readLoop(interval time.Duration) {
 			}
 		}
 		c.mu.Unlock()
-
 	}
 
 }
