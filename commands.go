@@ -15,12 +15,13 @@ var Pokedex = make(map[string]pokeapi.PokemonToCatch)
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config, args string) error
+	callback    func(c *config, args ...string) error
 }
 
 type config struct {
 	Next     string
 	Previous string
+	Pokedex  map[string]pokeapi.PokemonToCatch
 }
 
 func init() {
@@ -55,16 +56,26 @@ func init() {
 			description: "Attempt to catch a Pokemon\n\tExample usage: catch squirtle",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect a Pokemon that you have caught to learn more about it",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "List out the contents of your pokedex",
+			callback:    commandPokedex,
+		},
 	}
 }
 
-func commandExit(c *config, args string) error {
+func commandExit(c *config, args ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config, args string) error {
+func commandHelp(c *config, args ...string) error {
 	names := make([]string, 0, len(commands))
 	for name := range commands {
 		names = append(names, name)
@@ -81,7 +92,7 @@ func commandHelp(c *config, args string) error {
 	return nil
 }
 
-func commandMap(c *config, args string) error {
+func commandMap(c *config, args ...string) error {
 	res, err := pokeapi.GetLocationAreas(c.Next)
 	if err != nil {
 		return err
@@ -99,7 +110,7 @@ func commandMap(c *config, args string) error {
 	return nil
 }
 
-func commandMapb(c *config, args string) error {
+func commandMapb(c *config, args ...string) error {
 	res, err := pokeapi.GetLocationAreas(c.Previous)
 	if err != nil {
 		return err
@@ -116,10 +127,10 @@ func commandMapb(c *config, args string) error {
 	return nil
 }
 
-func commandExplore(c *config, location string) error {
-	url := "https://pokeapi.co/api/v2/location-area/" + location
+func commandExplore(c *config, args ...string) error {
+	url := "https://pokeapi.co/api/v2/location-area/" + args[1]
 	exploreResponse, err := pokeapi.ExploreLocation(url)
-	fmt.Println("Exploring:", location)
+	fmt.Println("Exploring:", args[1])
 	if err != nil {
 		return fmt.Errorf("Error within exploring a location: %w", err)
 	}
@@ -130,22 +141,50 @@ func commandExplore(c *config, location string) error {
 	return nil
 }
 
-func commandCatch(c *config, pokemon string) error {
-	url := "https://pokeapi.co/api/v2/pokemon/" + pokemon
+func commandCatch(c *config, args ...string) error {
+	url := "https://pokeapi.co/api/v2/pokemon/" + args[1]
 	res, err := pokeapi.CatchPokemon(url)
 	if err != nil {
 		return fmt.Errorf("Error within CatchPokemon call: %w", err)
 	}
-	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon)
+	fmt.Printf("Throwing a Pokeball at %s...\n", args[1])
 	catch, err := TryCatch(res)
 	if catch {
-		fmt.Println(pokemon, "was caught!")
-		Pokedex[pokemon] = res
+		fmt.Println(args[1], "was caught!")
+		c.Pokedex[args[1]] = res
+		fmt.Println("You may now inspect it with the inspect command")
 	} else {
-		fmt.Println(pokemon, "escaped!")
+		fmt.Println(args[1], "escaped!")
 	}
 	return nil
 }
+
+func commandInspect(c *config, args ...string) error {
+	pokemon, ok := c.Pokedex[args[1]]
+	if ok {
+		fmt.Println("Name:", pokemon.Name)
+		fmt.Println("Weight", pokemon.Weight)
+		fmt.Println("Stats:")
+		for _, val := range pokemon.Stats {
+			fmt.Printf("-%s: %d\n", val.Stat.Name, val.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, val := range pokemon.Types {
+			fmt.Printf("-%s\n", val.Type.Name)
+		}
+		return nil
+	}
+	return fmt.Errorf("That Pokemon is not in your Pokedex, you need to catch it first!")
+}
+
+func commandPokedex(c *config, args ...string) error {
+	fmt.Println("Your pokedex")
+	for _, val := range c.Pokedex {
+		fmt.Printf("- %s\n", val.Name)
+	}
+	return nil
+}
+
 func isPreviousNil(prev *string) bool {
 	if prev == nil {
 		return true

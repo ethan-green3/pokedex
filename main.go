@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/ethan-green3/pokedexcli/pokeapi"
 )
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	config := config{Next: "https://pokeapi.co/api/v2/location-area/", Previous: ""}
+	config := config{Next: "https://pokeapi.co/api/v2/location-area/", Previous: "", Pokedex: make(map[string]pokeapi.PokemonToCatch)}
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
@@ -18,11 +20,7 @@ func main() {
 			continue
 		}
 		if value, ok := commands[command[0]]; ok {
-			args := ""
-			if len(command) > 1 {
-				args = command[1]
-			}
-			err := value.callback(&config, args)
+			err := value.callback(&config, command...)
 			if err != nil {
 				fmt.Println(err)
 			}
