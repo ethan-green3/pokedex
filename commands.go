@@ -28,42 +28,42 @@ func init() {
 	commands = map[string]cliCommand{
 		"exit": {
 			name:        "exit",
-			description: "Exit the Pokedex",
+			description: "Exit the Pokedex\n",
 			callback:    commandExit,
 		},
 		"help": {
 			name:        "help",
-			description: "Displays a help message",
+			description: "Displays a help message\n",
 			callback:    commandHelp,
 		},
 		"map": {
 			name:        "map",
-			description: "Display the names of 20 location areas in the Pokemon world",
+			description: "Display the names of 20 location areas in the Pokemon world\n",
 			callback:    commandMap,
 		},
 		"mapb": {
 			name:        "mapb",
-			description: "Display the names of the previous 20 location areas in the Pokemon world",
+			description: "Display the names of the previous 20 location areas in the Pokemon world\n",
 			callback:    commandMapb,
 		},
 		"explore": {
 			name:        "explore",
-			description: "Explore a location to learn more about the Pokemon that are there\n\tExample usage: explore mt-coronet-2f",
+			description: "Explore a location to learn more about the Pokemon that are there\n\tExample usage: explore mt-coronet-2f\n",
 			callback:    commandExplore,
 		},
 		"catch": {
 			name:        "catch",
-			description: "Attempt to catch a Pokemon\n\tExample usage: catch squirtle",
+			description: "Attempt to catch a Pokemon\n\tExample usage: catch squirtle\n",
 			callback:    commandCatch,
 		},
 		"inspect": {
 			name:        "inspect",
-			description: "Inspect a Pokemon that you have caught to learn more about it",
+			description: "Inspect a Pokemon that you have caught to learn moreabout it\n\tExample usage: inspect pikachu\n",
 			callback:    commandInspect,
 		},
 		"pokedex": {
 			name:        "pokedex",
-			description: "List out the contents of your pokedex",
+			description: "List out the contents of your pokedex\n",
 			callback:    commandPokedex,
 		},
 	}

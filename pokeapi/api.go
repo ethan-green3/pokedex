@@ -12,17 +12,6 @@ import (
 
 var cache = pokecache.NewCache(time.Second * 30)
 
-type LocationResponse struct {
-	Results  []Location `json:"results"`
-	Next     *string    `json:"next"`
-	Previous *string    `json:"previous"`
-}
-
-type Location struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
 // Returns a list of 20 locations based on the given URL by the map and mapb commands
 func GetLocationAreas(url string) (LocationResponse, error) {
 	if val, found := cache.Get(url); found {
@@ -62,19 +51,6 @@ func GetLocationAreas(url string) (LocationResponse, error) {
 	return r, nil
 }
 
-type ExploreResponse struct {
-	Encounters []PokemonEncounters `json:"pokemon_encounters"`
-}
-
-type PokemonEncounters struct {
-	Pokemon Pokemon `json:"pokemon"`
-}
-
-type Pokemon struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
 // Explores a given location by the explore command to return back a response that has a slice of pokemon encounters which include
 // a Name and URL for the pokemon in that encounter
 func ExploreLocation(url string) (ExploreResponse, error) {
@@ -107,37 +83,7 @@ func ExploreLocation(url string) (ExploreResponse, error) {
 	return expRes, nil
 }
 
-type PokemonToCatch struct {
-	BaseExperience int     `json:"base_experience"`
-	Name           string  `json:"name"`
-	ID             int     `json:"id"`
-	Weight         int     `json:"weight"`
-	Height         int     `json:"height"`
-	Stats          []Stats `json:"stats"`
-	Types          []Types `json:"types"`
-}
-
-type Type struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
-type Types struct {
-	Slot int  `json:"slot"`
-	Type Type `json:"type"`
-}
-
-type Stat struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
-type Stats struct {
-	BaseStat int  `json:"base_stat"`
-	Effort   int  `json:"effort"`
-	Stat     Stat `json:"Stat"`
-}
-
+// Fetches stats to return back the struct to determine rates for when a pokemon can be caught
 func CatchPokemon(url string) (PokemonToCatch, error) {
 	if val, found := cache.Get(url); found {
 		var p PokemonToCatch
