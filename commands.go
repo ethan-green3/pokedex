@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"sort"
 
@@ -9,6 +10,7 @@ import (
 )
 
 var commands map[string]cliCommand
+var Pokedex = make(map[string]pokeapi.PokemonToCatch)
 
 type cliCommand struct {
 	name        string
@@ -47,6 +49,11 @@ func init() {
 			name:        "explore",
 			description: "Explore a location to learn more about the Pokemon that are there\n\tExample usage: explore mt-coronet-2f",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a Pokemon\n\tExample usage: catch squirtle",
+			callback:    commandCatch,
 		},
 	}
 }
@@ -123,9 +130,49 @@ func commandExplore(c *config, location string) error {
 	return nil
 }
 
+func commandCatch(c *config, pokemon string) error {
+	url := "https://pokeapi.co/api/v2/pokemon/" + pokemon
+	res, err := pokeapi.CatchPokemon(url)
+	if err != nil {
+		return fmt.Errorf("Error within CatchPokemon call: %w", err)
+	}
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon)
+	catch, err := TryCatch(res)
+	if catch {
+		fmt.Println(pokemon, "was caught!")
+		Pokedex[pokemon] = res
+	} else {
+		fmt.Println(pokemon, "escaped!")
+	}
+	return nil
+}
 func isPreviousNil(prev *string) bool {
 	if prev == nil {
 		return true
 	}
 	return false
+}
+
+func TryCatch(pokemon pokeapi.PokemonToCatch) (bool, error) {
+	var chanceToFail float64
+	exp := pokemon.BaseExperience
+	if exp < 100 {
+		chanceToFail = 0.5
+	} else if exp > 100 && exp < 200 {
+		chanceToFail = 0.6
+	} else if exp > 200 && exp < 300 {
+		chanceToFail = 0.7
+	} else if exp > 300 && exp < 350 {
+		chanceToFail = 0.8
+	} else {
+		chanceToFail = 0.9
+	}
+
+	roll := rand.Float64()
+	if roll > chanceToFail {
+		return true, nil
+	} else {
+		return false, nil
+	}
+
 }

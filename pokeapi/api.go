@@ -10,6 +10,8 @@ import (
 	"github.com/ethan-green3/pokedexcli/internal/pokecache"
 )
 
+var cache = pokecache.NewCache(time.Second * 30)
+
 type LocationResponse struct {
 	Results  []Location `json:"results"`
 	Next     *string    `json:"next"`
@@ -21,21 +23,7 @@ type Location struct {
 	URL  string `json:"url"`
 }
 
-type ExploreResponse struct {
-	Encounters []PokemonEncounters `json:"pokemon_encounters"`
-}
-
-type PokemonEncounters struct {
-	Pokemon Pokemon `json:"pokemon"`
-}
-
-type Pokemon struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
-var cache = pokecache.NewCache(time.Second * 30)
-
+// Returns a list of 20 locations based on the given URL by the map and mapb commands
 func GetLocationAreas(url string) (LocationResponse, error) {
 	if val, found := cache.Get(url); found {
 		var r LocationResponse
@@ -68,16 +56,29 @@ func GetLocationAreas(url string) (LocationResponse, error) {
 	}
 
 	cache.Add(url, data)
-	err = json.Unmarshal(data, &r)
-	if err != nil {
+	if err = json.Unmarshal(data, &r); err != nil {
 		return r, fmt.Errorf("Error unmarshaling JSON into response struct: %w", err)
 	}
 	return r, nil
 }
 
+type ExploreResponse struct {
+	Encounters []PokemonEncounters `json:"pokemon_encounters"`
+}
+
+type PokemonEncounters struct {
+	Pokemon Pokemon `json:"pokemon"`
+}
+
+type Pokemon struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+// Explores a given location by the explore command to return back a response that has a slice of pokemon encounters which include
+// a Name and URL for the pokemon in that encounter
 func ExploreLocation(url string) (ExploreResponse, error) {
 	if val, found := cache.Get(url); found {
-		fmt.Println("Found location in cache")
 		var expRes ExploreResponse
 		err := json.Unmarshal(val, &expRes)
 		if err != nil {
@@ -104,4 +105,35 @@ func ExploreLocation(url string) (ExploreResponse, error) {
 		return expRes, fmt.Errorf("Error unmarshaling JSON into Explore resposne struct: %w", err)
 	}
 	return expRes, nil
+}
+
+type PokemonToCatch struct {
+	BaseExperience int    `json:"base_experience"`
+	Name           string `json:"name"`
+	ID             int    `json:"id"`
+}
+
+func CatchPokemon(url string) (PokemonToCatch, error) {
+	if val, found := cache.Get(url); found {
+		var p PokemonToCatch
+		if err := json.Unmarshal(val, &p); err != nil {
+			return p, fmt.Errorf("Error unmarshaling pokemon to catch from cache")
+		}
+		return p, nil
+	}
+	client := http.Client{}
+	var p PokemonToCatch
+	res, err := client.Get(url)
+	if err != nil {
+		return p, fmt.Errorf("Error getting data for pokemon to catch: %w", err)
+	}
+	data, err := io.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	cache.Add(url, data)
+	if err = json.Unmarshal(data, &p); err != nil {
+		return p, fmt.Errorf("Error unmarshaling API response into Pokemon to catch struct: %w", err)
+	}
+
+	return p, nil
 }
