@@ -71,7 +71,9 @@ func ExploreLocation(url string) (ExploreResponse, error) {
 	}
 	defer res.Body.Close()
 	data, err := io.ReadAll(res.Body)
-
+	if res.StatusCode == 404 {
+		return expRes, fmt.Errorf("Location could not be found")
+	}
 	if err != nil {
 		return expRes, fmt.Errorf("Error reading data from exlore response body: %w", err)
 	}
@@ -98,9 +100,11 @@ func CatchPokemon(url string) (PokemonToCatch, error) {
 	if err != nil {
 		return p, fmt.Errorf("Error getting data for pokemon to catch: %w", err)
 	}
+	if res.StatusCode == 404 {
+		return p, fmt.Errorf("Pokemon could not be found")
+	}
 	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
-
 	cache.Add(url, data)
 	if err = json.Unmarshal(data, &p); err != nil {
 		return p, fmt.Errorf("Error unmarshaling API response into Pokemon to catch struct: %w", err)
