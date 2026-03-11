@@ -150,6 +150,9 @@ func commandCatch(c *config, args ...string) error {
 	if catch {
 		fmt.Println(args[1], "was caught!")
 		c.Pokedex[args[1]] = res
+		if err := savePokedex(c.Pokedex); err != nil {
+			return fmt.Errorf("Error saving to Pokedex: %w", err)
+		}
 		fmt.Println("You may now inspect it with the inspect command")
 	} else {
 		fmt.Println(args[1], "escaped!")

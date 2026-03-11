@@ -9,10 +9,16 @@ import (
 )
 
 func main() {
+	pokedex, err := loadPokedex()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "warning: could not load pokedex:", err)
+		pokedex = make(map[string]pokeapi.PokemonToCatch)
+	}
+
 	cfg := config{
 		Next:     "https://pokeapi.co/api/v2/location-area/",
 		Previous: "",
-		Pokedex:  make(map[string]pokeapi.PokemonToCatch),
+		Pokedex:  pokedex,
 	}
 
 	p := tea.NewProgram(newModel(cfg), tea.WithAltScreen())
