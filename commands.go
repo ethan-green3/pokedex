@@ -140,6 +140,9 @@ func commandExplore(c *config, args ...string) error {
 }
 
 func commandCatch(c *config, args ...string) error {
+	if val, ok := c.Pokedex[args[1]]; ok {
+		return fmt.Errorf("You already have that Pokemon! Use: inspect %s to learn more about it.", val.Name)
+	}
 	url := "https://pokeapi.co/api/v2/pokemon/" + args[1]
 	res, err := pokeapi.CatchPokemon(url)
 	if err != nil {
